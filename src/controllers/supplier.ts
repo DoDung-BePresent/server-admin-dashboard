@@ -1,3 +1,4 @@
+import { supplierForm } from "../forms/suppliers";
 import SupplierModel from "../models/SupplierModel";
 
 const getSuppliers = async (req: any, res: any) => {
@@ -19,6 +20,46 @@ const getSuppliers = async (req: any, res: any) => {
     });
   } catch (error: any) {
     console.log(error);
+    res.status(404).json({
+      message: error.message,
+    });
+  }
+};
+
+const getExportData = async (req: any, res: any) => {
+  const body = req.body;
+  const { start, end } = req.query;
+
+  const filter: any = {};
+
+  if (start && end) {
+    filter.createdAt = {
+      $lte: end,
+      $gte: start,
+    };
+  }
+
+  try {
+    const items = await SupplierModel.find(filter);
+
+    const data: any = [];
+    if (items.length > 0) {
+      items.forEach((item: any) => {
+        const value: any = {};
+
+        body.forEach((key: string) => {
+          value[`${key}`] = `${item._doc[`${key}`] ?? ""}`;
+        });
+
+        data.push(value);
+      });
+    }
+
+    res.status(200).json({
+      message: "Products",
+      data: data,
+    });
+  } catch (error: any) {
     res.status(404).json({
       message: error.message,
     });
@@ -82,4 +123,25 @@ const removeSupplier = async (req: any, res: any) => {
   }
 };
 
-export { addNew, getSuppliers, update, removeSupplier };
+const getForm = async (req: any, res: any) => {
+  try {
+    const form = {
+      title: "Supplier",
+      layout: "horizontal",
+      labelCol: 6,
+      wrapperCol: 18,
+      formItems: supplierForm,
+    };
+
+    res.status(200).json({
+      message: "",
+      data: form,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
+export { addNew, getSuppliers, update, removeSupplier, getForm, getExportData };
